@@ -1,0 +1,27 @@
+﻿Column_name,Type,Computed,Length,Prec,Scale,Nullable,TrimTrailingBlanks,FixedLenNullInSource,Collation,Descrizione
+IDN,char,no,4,     ,     ,no,no,no,Latin1_General_CI_AS,Codice Azienda
+KUT,char,no,6,     ,     ,no,no,no,Latin1_General_CI_AS,Utente
+MES,char,no,6,     ,     ,no,no,no,Latin1_General_CI_AS,Mese di riferimento yyyyMM
+VER,smallint,no,2,5    ,0    ,no,(n/a),(n/a),NULL,Versione Curva
+PUB,char,no,1,     ,     ,no,no,no,Latin1_General_CI_AS,valore 1= Visibile su Web Valore 0=Non pubblicata
+ACT,char,no,1,     ,     ,no,no,no,Latin1_General_CI_AS,valore 1= Curva corrente  valore 0=Non attiva
+FST,char,no,1,     ,     ,no,no,no,Latin1_General_CI_AS,valore C = Congelata      valore N=Non congelata (in edit da parte di qlc)
+INFO,varchar,no,255,     ,     ,yes,no,yes,Latin1_General_CI_AS,Descrizione della Curva (algoritmo usato per ricostruirla, Grezza, semplice VER, etc)
+UPS,varchar,no,16,     ,     ,yes,no,yes,Latin1_General_CI_AS,Utente che ha apportato la modifica
+UPD,varchar,no,12,     ,     ,yes,no,yes,Latin1_General_CI_AS,Data ultima modifica yyyyMMddhhmm
+UID,varchar,no,12,     ,     ,yes,no,yes,Latin1_General_CI_AS,Data ora inserimento del dato 
+FVL,char,no,1,     ,     ,no,no,no,Latin1_General_CI_AS,Validita' valore 'V'=Validata  valore 'N'=non validata
+FVA,varchar,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Stato iniziale di validazione
+FSP,varchar,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Stato lavorazione della Curva
+MRK,varchar,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Evidenziatore
+UUD,varchar,no,12,     ,     ,yes,no,yes,Latin1_General_CI_AS,Data aggiornamento Curva da RetiAMM 
+UVD,varchar,no,12,     ,     ,yes,no,yes,Latin1_General_CI_AS,Data validazione Curva
+FIMP,varchar,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Flag Sistama importazione esterna
+C1,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Consumi Totali attiva nel Mese
+LX1,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,segnante misurato lettura al primo del mese inserita dall'operatore
+LX3,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,segnante corretto lettura al primo del mese inserita dall'operatore
+FRC,char,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Flag rivalutazione curva
+FVLD,char,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Indica se la curva arrivata dal distributore e' stata validata oppure no (V,N)
+FQLD,char,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Indica se la curva arrivata dal distributore � Effettiva o Stimata (E,S)
+NVER,smallint,no,2,5    ,0    ,yes,(n/a),(n/a),NULL,Versione curva su nuovo modulo letture giornaliere
+KAMT,varchar,no,6,     ,     ,yes,no,yes,Latin1_General_CI_AS,Chiave albero di calcolo MEAMT

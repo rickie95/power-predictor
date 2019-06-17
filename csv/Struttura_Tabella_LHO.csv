@@ -1,0 +1,30 @@
+﻿Column_name,Type,Computed,Length,Prec,Scale,Nullable,TrimTrailingBlanks,FixedLenNullInSource,Collation,Descrizione
+IDN,char,no,4,     ,     ,no,no,no,Latin1_General_CI_AS,Codice Azienda 
+KUT,char,no,6,     ,     ,no,no,no,Latin1_General_CI_AS,Utenza
+DHH,char,no,10,     ,     ,no,no,no,Latin1_General_CI_AS,DataOra del campione 
+HME,char,no,4,     ,     ,no,no,no,Latin1_General_CI_AS,Ora del campione
+W1,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Energia Attiva nell'ora
+W2,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Energia Reattiva nell'ora
+W3,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Picco energia attiva orario
+FCP,char,no,1,     ,     ,no,no,no,Latin1_General_CI_AS,Se il campione 'E'=effettivo 'R'=ricostruito 'C'=convenzionale 
+VER,smallint,no,2,5    ,0    ,no,(n/a),(n/a),NULL,Versione della Curva 
+OUM,varchar,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Unità di misura
+CCK,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Coefficiente Moltiplicatore per ottenere Kwh
+FVL,varchar,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Validita' valore 'V'=Validata  valore 'N'=non validata
+OH245,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Energia Reattiva 3/4 d'ora
+OH145,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Energia Attiva 3/4 d'ora 
+OH230,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Energia Reattiva 2/4 d'ora
+OH130,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Energia Attiva 2/4 d'ora 
+OH115,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Energia Attiva 1/4 d'ora 
+OH215,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Energia Reattiva 1/4 d'ora 
+OH200,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Energia Reattiva 4/4 d'ora 
+OH100,float,no,8,53   ,NULL,yes,(n/a),(n/a),NULL,Energia Attiva 4/4 d'ora 
+DVL100,char,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Obsoleto
+DVL115,char,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Obsoleto
+DVL130,char,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Obsoleto
+DVL145,char,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Obsoleto
+DVL200,char,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Obsoleto
+DVL215,char,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Obsoleto
+DVL230,char,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Obsoleto
+DVL245,char,no,1,     ,     ,yes,no,yes,Latin1_General_CI_AS,Obsoleto
+DHT,varchar,no,10,     ,     ,yes,no,yes,Latin1_General_CI_AS,SOLO GAS: Ora campione	
