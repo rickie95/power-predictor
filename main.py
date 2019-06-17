@@ -1,6 +1,6 @@
 import pandas as pd
-#from fbprophet import Prophet
-#from fbprophet.diagnostics import cross_validation, performance_metrics
+from fbprophet import Prophet
+from fbprophet.diagnostics import cross_validation, performance_metrics
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,37 +21,37 @@ def prophet(input_file, results_dir):
 
     # Creo un modello e faccio il fit
 
-    m = Prophet(daily_seasonality=20, yearly_seasonality=20)
+    m = Prophet(period=(1*24), daily_seasonality=20, yearly_seasonality=20)
     print("Fitting model...")
     m.fit(df)
 
     # Creo un dataframe con le date che mi interessa prevedere. Posso anche scegliere di non fare previsioni in avanti
     # (e ricostruire quindi solo i dati mancanti) non specificando period.
 
-    future = m.make_future_dataframe(periods=(30*24), freq='H', include_history=True)
+    future = m.make_future_dataframe(freq='H', include_history=True)
     future['floor'] = min(df['y'])
 
     forecast = m.predict(future)
     print("Prediction: ok")
 
-    forecast.to_csv(os.path.join(results_dir, input_file[:-3] + "_prediction.csv"), sep=',')
+    forecast.to_csv(os.path.join(results_dir, input_file.filename + "_prediction.csv"), sep=',')
 
     # Plotto le componenti STL e i dati interpolati/ricostruiti
 
-    data_fig = m.plot(forecast)
-    components_fig = m.plot_components(forecast)
+    #data_fig = m.plot(forecast)
+    #components_fig = m.plot_components(forecast)
 
-    data_fig.show()
-    components_fig.show()
+    #data_fig.show()
+    #components_fig.show()
 
     # Ripristino i dati con un esponenziale
 
     df['y'] = np.exp(df['y'])
     forecast['yhat'] = np.exp(forecast['yhat'])
 
-    plt.plot(forecast['yhat'][10000:10500], 'r')
-    plt.plot(df['y'][10000:10500], 'b')
-    plt.show()
+    #plt.plot(forecast['yhat'][10000:10500], 'r')
+    #plt.plot(df['y'][10000:10500], 'b')
+    #plt.show()
 
     # Eseguo la k-fold cross validation del modello.
 
@@ -62,7 +62,7 @@ def prophet(input_file, results_dir):
 
     performance_dataframe = performance_metrics(dataframe_cv)
     performance_dataframe.head()
-    performance_dataframe.to_csv(os.path.join(results_dir, input_file[:-3] + '_performance_results.csv'), sep=",")
+    performance_dataframe.to_csv(os.path.join(results_dir, input_file.filename + "_performance_results.csv"), sep=",")
 
 
 def prepare_dataframe(filename, col_to_y='LHO.W1'):
@@ -104,19 +104,22 @@ def prepare_dataframe(filename, col_to_y='LHO.W1'):
 
 
 def main():
-    filenames = ['csv/KUT_033CB5_LHO.csv',
-                 'csv/KUT_039AFA_LHO.csv',
-                 'csv/KUT_050BC8_LHO.csv',
-                 'csv/KUT_055F63_LHO.csv',
-                 'csv/KUT_0508A9_LHO.csv']
+    filenames = ['KUT_033CB5_LHO.csv',
+                 'KUT_039AFA_LHO.csv',
+                 'KUT_050BC8_LHO.csv',
+                 'KUT_055F63_LHO.csv',
+                 'KUT_0508A9_LHO.csv']
     for file in filenames:
-        dataframe = prepare_dataframe(file)
-        plt.plot(dataframe['y'])
-        plt.show()
+        print("\n### " + file + " ### \n")
+        dataframe = prepare_dataframe('csv/LHO/' + file)
+        dataframe.filename = file[:-4]
+        #plt.plot(dataframe['y'])
+        #plt.xlabel(file)
+        #plt.show()
         today = datetime.datetime.now()
         results_dir = "results_" + str(today.year) + "_" + str(today.month) + "_" + str(today.day) + "__" \
-                      + str(today.hour) + "_" + str(today.minute)
+                      + str(today.hour) + "_" + str(today.minute) + "_" + str(today.second)
         os.mkdir(results_dir)
-        #prophet(dataframe, results_dir)
+        prophet(dataframe, results_dir)
 
 main()
