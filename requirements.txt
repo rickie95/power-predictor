@@ -1,0 +1,6 @@
+numpy
+cython
+plotly
+pystan
+datetime
+fbprophet
