@@ -21,14 +21,14 @@ def prophet(input_file, results_dir):
 
     # Creo un modello e faccio il fit
 
-    m = Prophet(period=(1*24), daily_seasonality=20, yearly_seasonality=20)
+    m = Prophet(daily_seasonality=20, yearly_seasonality=20)
     print("Fitting model...")
     m.fit(df)
 
     # Creo un dataframe con le date che mi interessa prevedere. Posso anche scegliere di non fare previsioni in avanti
     # (e ricostruire quindi solo i dati mancanti) non specificando period.
 
-    future = m.make_future_dataframe(freq='H', include_history=True)
+    future = m.make_future_dataframe(periods=(24), freq='H', include_history=True)
     future['floor'] = min(df['y'])
 
     forecast = m.predict(future)
@@ -93,12 +93,9 @@ def prepare_dataframe(filename, col_to_y='LHO.W1'):
     # estraggo solo le righe effettive
     eff_rows = df.loc[df['LHO.FCP'] == 'E']
 
-    for i in range(eff_rows.shape[0]):
-        try:
-            timestamps.append(handle_timestamp(eff_rows['LHO.DHH'][i]))
-            values.append(eff_rows[col_to_y][i])
-        except Exception as ex:
-            print(ex)
+    for i in eff_rows.index:
+        timestamps.append(handle_timestamp(eff_rows['LHO.DHH'][i]))
+        values.append(eff_rows[col_to_y][i])
 
     d = {'ds': timestamps, 'y': values}
     dataframe = pd.DataFrame(data=d)
