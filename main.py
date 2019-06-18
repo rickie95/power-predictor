@@ -104,6 +104,10 @@ def prepare_dataframe(filename, col_to_y='LHO.W1'):
 
 
 def main():
+    today = datetime.datetime.now()
+    results_dir = "results_" + str(today.year) + "_" + str(today.month) + "_" + str(today.day) + "__" \
+                  + str(today.hour) + "_" + str(today.minute) + "_" + str(today.second)
+    os.mkdir(results_dir)
     filenames = ['KUT_033CB5_LHO.csv',
                  'KUT_039AFA_LHO.csv',
                  'KUT_050BC8_LHO.csv',
@@ -116,10 +120,6 @@ def main():
         #plt.plot(dataframe['y'])
         #plt.xlabel(file)
         #plt.show()
-        today = datetime.datetime.now()
-        results_dir = "results_" + str(today.year) + "_" + str(today.month) + "_" + str(today.day) + "__" \
-                      + str(today.hour) + "_" + str(today.minute) + "_" + str(today.second)
-        os.mkdir(results_dir)
         prophet(dataframe, results_dir)
 
 main()
