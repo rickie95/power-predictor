@@ -94,8 +94,11 @@ def prepare_dataframe(filename, col_to_y='LHO.W1'):
     eff_rows = df.loc[df['LHO.FCP'] == 'E']
 
     for i in range(eff_rows.shape[0]):
-        timestamps.append(handle_timestamp(eff_rows['LHO.DHH'][i]))
-        values.append(eff_rows[col_to_y][i])
+        try:
+            timestamps.append(handle_timestamp(eff_rows['LHO.DHH'][i]))
+            values.append(eff_rows[col_to_y][i])
+        except Exception as ex:
+            print(ex)
 
     d = {'ds': timestamps, 'y': values}
     dataframe = pd.DataFrame(data=d)
