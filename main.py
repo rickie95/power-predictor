@@ -1,13 +1,13 @@
-import pandas as pd
 from fbprophet import Prophet
-from fbprophet.diagnostics import cross_validation, performance_metrics
-import os
+from multiprocessing import Process
+from os import path
+import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import datetime
+import os
 
 
-def prophet(input_file, results_dir):
+def prophet(input_file, results_dir, log, splits):
     # df = pd.read_csv(input_file, decimal=".", delimiter=",")
     df = input_file
     print(df.head())
@@ -16,25 +16,55 @@ def prophet(input_file, results_dir):
     # Imposto un limite inferiore al modello
 
     df.loc[(df['y'] <= 0), 'y'] = None
-    df['y'] = np.log(df['y'])
+    if log:
+        df['y'] = np.log(df['y'])
     df['floor'] = min(df['y'])
+
+    mse_values = []
 
     # Creo un modello e faccio il fit
 
-    m = Prophet(daily_seasonality=20, yearly_seasonality=20)
-    print("Fitting model...")
-    m.fit(df)
+    k = splits
+    for i in range(k):
 
-    # Creo un dataframe con le date che mi interessa prevedere. Posso anche scegliere di non fare previsioni in avanti
-    # (e ricostruire quindi solo i dati mancanti) non specificando period.
+        df_copia = df.copy(deep=True)
+        fraction = df.shape[0]/k
+        df_copia.loc[(fraction*i):(fraction*(i+1)), 'y'] = None
 
-    future = m.make_future_dataframe(periods=(24), freq='H', include_history=True)
-    future['floor'] = min(df['y'])
+        m = Prophet(daily_seasonality=20, yearly_seasonality=20)
+        print("Fitting model...(" + str(i+1) + "/"+str(k)+")")
+        m.fit(df)
 
-    forecast = m.predict(future)
-    print("Prediction: ok")
+        # Creo un dataframe con le date che mi interessa prevedere. Posso anche scegliere di non
+        # fare previsioni in avanti (e ricostruire quindi solo i dati mancanti) non specificando period.
 
-    forecast.to_csv(os.path.join(results_dir, input_file.filename + "_prediction.csv"), sep=',')
+        future = m.make_future_dataframe(periods=(24), freq='H', include_history=True)
+        future['floor'] = min(df['y'])
+
+        forecast = (m.predict(future))
+
+        end = fraction*(i+1)
+        if fraction*(i+1) >= df.shape[0]:
+            end = df.shape[0]-1
+
+        original = np.copy(df.loc[fraction*i:end, 'y'])
+        predicted = np.copy(forecast.loc[fraction*i:end, 'yhat'])
+
+        if log:
+            original = np.exp(original)
+            predicted = np.exp(predicted)
+
+        numeric_integral_difference = np.nansum(original) - np.nansum(predicted)
+        squared_errors = np.power((predicted - original), 2)
+        mse_sum = np.nansum(squared_errors)
+        mse = mse_sum / original.shape[0]
+
+        print("MSE run "+str(i+1) + "/"+str(k)+": "+str(mse))
+        mse_values.append((input_file.filename, i+1, mse, log, numeric_integral_difference))
+
+        print("Prediction: ok (" + str(i+1) + "/"+str(k)+")")
+
+    #forecast.to_csv(os.path.join(results_dir, input_file.filename + "_mse.csv"), sep=',')
 
     # Plotto le componenti STL e i dati interpolati/ricostruiti
 
@@ -46,23 +76,13 @@ def prophet(input_file, results_dir):
 
     # Ripristino i dati con un esponenziale
 
-    df['y'] = np.exp(df['y'])
-    forecast['yhat'] = np.exp(forecast['yhat'])
+
 
     #plt.plot(forecast['yhat'][10000:10500], 'r')
     #plt.plot(df['y'][10000:10500], 'b')
     #plt.show()
 
-    # Eseguo la k-fold cross validation del modello.
-
-    dataframe_cv = cross_validation(m, horizon='1000 hours')
-    dataframe_cv.head()
-
-    # Misuro le metriche MSE MASE ecc..
-
-    performance_dataframe = performance_metrics(dataframe_cv)
-    performance_dataframe.head()
-    performance_dataframe.to_csv(os.path.join(results_dir, input_file.filename + "_performance_results.csv"), sep=",")
+    return mse_values
 
 
 def prepare_dataframe(filename, col_to_y='LHO.W1'):
@@ -103,6 +123,16 @@ def prepare_dataframe(filename, col_to_y='LHO.W1'):
     return dataframe
 
 
+def crossvalidate(dataframe, results_dir, number_of_splits):
+    mse_values = []
+    mse_values.extend(prophet(dataframe, results_dir, False, number_of_splits))
+    mse_values.extend(prophet(dataframe, results_dir, True, number_of_splits))
+    with open((path.join(results_dir, dataframe.filename + "_results.csv")), "w") as f:
+        for elem in mse_values:
+            f.write((str(elem[0]) + ";" + str(elem[1]) + "," + str(elem[2]) + ";" + str(elem[4]) + ";" +
+                     str(elem[3]) + "\n"))
+
+
 def main():
     today = datetime.datetime.now()
     results_dir = "results_" + str(today.year) + "_" + str(today.month) + "_" + str(today.day) + "__" \
@@ -113,13 +143,29 @@ def main():
                  'KUT_050BC8_LHO.csv',
                  'KUT_055F63_LHO.csv',
                  'KUT_0508A9_LHO.csv']
+    threads = []
+    delta = 7*4
+
     for file in filenames:
         print("\n### " + file + " ### \n")
         dataframe = prepare_dataframe('csv/LHO/' + file)
         dataframe.filename = file[:-4]
+        max_ts = max(dataframe['ds'])
+        min_ts = min(dataframe['ds'])
+        n_dd = max_ts - min_ts
+        splits = int(n_dd.days / delta)
+        print("SPLITS: "+str(splits))
         #plt.plot(dataframe['y'])
         #plt.xlabel(file)
         #plt.show()
-        prophet(dataframe, results_dir)
+
+        #lancia thread
+        p = Process(target=crossvalidate, args=(dataframe, results_dir, splits))
+        p.start()
+        threads.append(p)
+
+    for t in threads:
+        t.join()
+
 
 main()
