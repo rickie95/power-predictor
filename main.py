@@ -1,88 +1,76 @@
 from fbprophet import Prophet
-from multiprocessing import Process
+from multiprocessing import Process, Pool
 from os import path
 import pandas as pd
 import numpy as np
 import datetime
 import os
+import time
+
+
+def worker(passthrough):
+    dataframe, split_numb, split_total, fract, log, filename = passthrough
+    df_copia = dataframe.copy(deep=True)
+    df_copia.loc[(fract * split_numb):(fract * (split_numb + 1)), 'y'] = None
+    m = Prophet(daily_seasonality=20, yearly_seasonality=20)
+    m.fit(dataframe)
+    # Creo un dataframe con le date che mi interessa prevedere. Posso anche scegliere di non
+    # fare previsioni in avanti (e ricostruire quindi solo i dati mancanti) non specificando period.
+    future = m.make_future_dataframe(periods=(24), freq='H', include_history=True)
+    future['floor'] = min(dataframe['y'])
+    forecast = (m.predict(future))
+    end = fract * (split_numb + 1)
+    if fract * (split_numb + 1) >= dataframe.shape[0]:
+        end = dataframe.shape[0] - 1
+
+    original = np.copy(dataframe.loc[fract * split_numb:end, 'y'])
+    predicted = np.copy(forecast.loc[fract * split_numb:end, 'yhat'])
+
+    if log:
+        original = np.exp(original)
+        predicted = np.exp(predicted)
+
+    numeric_integral_difference = np.nansum(original) - np.nansum(predicted)
+    squared_errors = np.power((predicted - original), 2)
+    mse_sum = np.nansum(squared_errors)
+    mse = mse_sum / original.shape[0]
+    std_dev = np.sqrt(np.power(np.nansum(np.subtract(predicted, mse)), 2) / original.shape[0])
+    print("JOB " + filename + ": " + str(split_numb + 1) + "/" + str(split_total) + " MSE:" + str(mse))
+    return filename, split_numb + 1, mse, log, numeric_integral_difference, std_dev
 
 
 def prophet(input_file, results_dir, log, splits):
     # df = pd.read_csv(input_file, decimal=".", delimiter=",")
     df = input_file
     print(df.head())
-
     # I valori tra 0 e -inf vengono nullati, in modo da poter fare il logaritmo senza noie.
     # Imposto un limite inferiore al modello
-
     df.loc[(df['y'] <= 0), 'y'] = None
     if log:
         df['y'] = np.log(df['y'])
     df['floor'] = min(df['y'])
 
-    mse_values = []
-
-    # Creo un modello e faccio il fit
-
+    # Creo un pool di thread
     k = splits
+    fraction = df.shape[0] / k
+    pool = Pool(processes=4)
+    input_list = []
     for i in range(k):
+        input_list.append((df, i, k, fraction, log, input_file.filename))
+    results = pool.map(worker, input_list)  # lista di tuple con i risultati
 
-        df_copia = df.copy(deep=True)
-        fraction = df.shape[0]/k
-        df_copia.loc[(fraction*i):(fraction*(i+1)), 'y'] = None
-
-        m = Prophet(daily_seasonality=20, yearly_seasonality=20)
-        print("Fitting model...(" + str(i+1) + "/"+str(k)+")")
-        m.fit(df)
-
-        # Creo un dataframe con le date che mi interessa prevedere. Posso anche scegliere di non
-        # fare previsioni in avanti (e ricostruire quindi solo i dati mancanti) non specificando period.
-
-        future = m.make_future_dataframe(periods=(24), freq='H', include_history=True)
-        future['floor'] = min(df['y'])
-
-        forecast = (m.predict(future))
-
-        end = fraction*(i+1)
-        if fraction*(i+1) >= df.shape[0]:
-            end = df.shape[0]-1
-
-        original = np.copy(df.loc[fraction*i:end, 'y'])
-        predicted = np.copy(forecast.loc[fraction*i:end, 'yhat'])
-
-        if log:
-            original = np.exp(original)
-            predicted = np.exp(predicted)
-
-        numeric_integral_difference = np.nansum(original) - np.nansum(predicted)
-        squared_errors = np.power((predicted - original), 2)
-        mse_sum = np.nansum(squared_errors)
-        mse = mse_sum / original.shape[0]
-        std_dev = np.sqrt( np.power( np.nansum( np.subtract(predicted, mse) ), 2 ) / original.shape[0] )
-        print("MSE run "+str(i+1) + "/"+str(k)+": "+str(mse))
-        mse_values.append((input_file.filename, i+1, mse, log, numeric_integral_difference, std_dev))
-
-        print("Prediction: ok (" + str(i+1) + "/"+str(k)+")")
-
-    #forecast.to_csv(os.path.join(results_dir, input_file.filename + "_mse.csv"), sep=',')
-
+    # forecast.to_csv(os.path.join(results_dir, input_file.filename + "_mse.csv"), sep=',')
     # Plotto le componenti STL e i dati interpolati/ricostruiti
-
-    #data_fig = m.plot(forecast)
-    #components_fig = m.plot_components(forecast)
-
-    #data_fig.show()
-    #components_fig.show()
-
+    # data_fig = m.plot(forecast)
+    # components_fig = m.plot_components(forecast)
+    # data_fig.show()
+    # components_fig.show()
     # Ripristino i dati con un esponenziale
+    # plt.plot(forecast['yhat'][10000:10500], 'r')
+    # plt.plot(df['y'][10000:10500], 'b')
+    # plt.show()
 
-
-
-    #plt.plot(forecast['yhat'][10000:10500], 'r')
-    #plt.plot(df['y'][10000:10500], 'b')
-    #plt.show()
-
-    return mse_values
+    return results
 
 
 def prepare_dataframe(filename, col_to_y='LHO.W1'):
@@ -125,15 +113,15 @@ def prepare_dataframe(filename, col_to_y='LHO.W1'):
 
 def crossvalidate(dataframe, results_dir, number_of_splits):
     def foo(df, rd, log, ns, lock):
-        elem = prophet(dataframe, results_dir, log, number_of_splits)[0]
-        print(elem)
+        list_of_elem = prophet(df, rd, log, ns)
         while lock:
             time.sleep(500)
             print("wait")
         lock = True
         f = open((path.join(results_dir, dataframe.filename + "_results.csv")), "a")
-        f.write((str(elem[0]) + ";" + str(elem[1]) + ";" + str(elem[2]) + ";" + str(elem[4]) 
-		+ ";" + str(elem[3]) + ";" + str(elem[5]) + "\n"))
+        for elem in list_of_elem:
+            f.write((str(elem[0]) + ";" + str(elem[1]) + ";" + str(elem[2]) + ";" + str(elem[4])
+                     + ";" + str(elem[3]) + ";" + str(elem[5]) + "\n"))
         lock = False
 
     file_lock = False
