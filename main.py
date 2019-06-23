@@ -58,9 +58,9 @@ def prophet(input_file, results_dir, log, splits):
         squared_errors = np.power((predicted - original), 2)
         mse_sum = np.nansum(squared_errors)
         mse = mse_sum / original.shape[0]
-
+        std_dev = np.sqrt( np.power( np.nansum( np.subtract(predicted, mse) ), 2 ) / original.shape[0] )
         print("MSE run "+str(i+1) + "/"+str(k)+": "+str(mse))
-        mse_values.append((input_file.filename, i+1, mse, log, numeric_integral_difference))
+        mse_values.append((input_file.filename, i+1, mse, log, numeric_integral_difference, std_dev))
 
         print("Prediction: ok (" + str(i+1) + "/"+str(k)+")")
 
@@ -124,13 +124,25 @@ def prepare_dataframe(filename, col_to_y='LHO.W1'):
 
 
 def crossvalidate(dataframe, results_dir, number_of_splits):
-    mse_values = []
-    mse_values.extend(prophet(dataframe, results_dir, False, number_of_splits))
-    mse_values.extend(prophet(dataframe, results_dir, True, number_of_splits))
-    with open((path.join(results_dir, dataframe.filename + "_results.csv")), "w") as f:
-        for elem in mse_values:
-            f.write((str(elem[0]) + ";" + str(elem[1]) + "," + str(elem[2]) + ";" + str(elem[4]) + ";" +
-                     str(elem[3]) + "\n"))
+    def foo(df, rd, log, ns, lock):
+        elem = prophet(dataframe, results_dir, log, number_of_splits)[0]
+        print(elem)
+        while lock:
+            time.sleep(500)
+            print("wait")
+        lock = True
+        f = open((path.join(results_dir, dataframe.filename + "_results.csv")), "a")
+        f.write((str(elem[0]) + ";" + str(elem[1]) + ";" + str(elem[2]) + ";" + str(elem[4]) 
+		+ ";" + str(elem[3]) + ";" + str(elem[5]) + "\n"))
+        lock = False
+
+    file_lock = False
+    p1 = Process(target=foo, args=(dataframe, results_dir, False, number_of_splits, file_lock))
+    p2 = Process(target=foo, args=(dataframe, results_dir, True, number_of_splits, file_lock))
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
 
 
 def main():
@@ -138,13 +150,14 @@ def main():
     results_dir = "results_" + str(today.year) + "_" + str(today.month) + "_" + str(today.day) + "__" \
                   + str(today.hour) + "_" + str(today.minute) + "_" + str(today.second)
     os.mkdir(results_dir)
-    filenames = ['KUT_033CB5_LHO.csv',
+    filenames = [ 'KUT_033CB5_LHO.csv',
                  'KUT_039AFA_LHO.csv',
                  'KUT_050BC8_LHO.csv',
                  'KUT_055F63_LHO.csv',
-                 'KUT_0508A9_LHO.csv']
+                 'KUT_0508A9_LHO.csv'
+                ]
     threads = []
-    delta = 7*4
+    delta = 7*2
 
     for file in filenames:
         print("\n### " + file + " ### \n")
