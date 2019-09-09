@@ -1,10 +1,10 @@
-from script import prepare_dataframe
+from script import prepare_dataframe, suppress_stdout_stderr
 from fbprophet import Prophet
 import datetime
 import os
 
 
-''' A simple demo showing what Prophet can do with a time serie with missing values.'''
+''' A simple demo showing what Prophet can do with a missing values time serie. '''
 
 
 def main():
@@ -24,6 +24,7 @@ def main():
     # Ok, now we create the Prophet model and we fit it with our cutted dataframe.
     model = Prophet(daily_seasonality=20, yearly_seasonality=20)
 
+    # with suppress_stdout_stderr(): if you want no output
     model.fit(dataframe)
 
     # We need to create a dataframe where store our time serie, reconstructed and provisioned.
@@ -47,6 +48,9 @@ def main():
     results_dir = "results_" + str(today.year) + "_" + str(today.month) + "_" + str(today.day) + "__" \
                   + str(today.hour) + "_" + str(today.minute) + "_" + str(today.second)
     os.mkdir(results_dir)
+
+    data_fig.savefig(os.path.join(results_dir, "data_plot.pdf"))
+    components_fig.savefig(os.path.join(results_dir, "STL_components_plot.pdf"))
 
     forecast.to_csv(os.path.join(results_dir, "results.csv"), sep=',')
 
