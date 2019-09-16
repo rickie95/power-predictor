@@ -1,4 +1,4 @@
-from script import prepare_dataframe, suppress_stdout_stderr, create_results_dir
+from prophet_utils import prepare_dataframe, suppress_stdout_stderr, create_results_dir
 from fbprophet import Prophet
 import os
 
@@ -9,7 +9,9 @@ import os
 def main():
 
     # Prophet requires a Pandas' dataframe with 'y' and 'ds' columns. We need to transform the csv a little.
-    dataframe = prepare_dataframe('csv/LHO/KUT_039AFA_LHO.csv')
+    dataframe = prepare_dataframe('input/dataset.csv')
+    print("First 5 rows of input file:")
+    dataframe.head()
 
     # Our data are complete, so we can cut some and see how Prophet reconstructs them.
     # loc: in the first part I've specified the condition requested, in the second I've selected the column
@@ -33,7 +35,7 @@ def main():
     future = model.make_future_dataframe(periods=24, freq='H', include_history=True)
 
     # Finally, we make Prophet do the job.
-    forecast = (model.predict(future))
+    forecast = model.predict(future)
 
     # Create reconstruction and STL components plots.
     data_fig = model.plot(forecast)

@@ -2,7 +2,7 @@ from multiprocessing import Pool
 from fbprophet import Prophet
 from os import path
 import numpy as np
-from script import *
+from prophet_utils import *
 import glob
 
 '''
@@ -19,7 +19,7 @@ import glob
 
 threads = 4                 # Specifies the number of jobs to run in parallel.
 input_dir = "csv/LHO/"      # Path to input files. Can be absolute.
-week_split = [70, 4, 2, 1]  # Sizes of splits, specified in weeks.
+week_split = [16, 4, 2, 1]  # Sizes of splits, specified in weeks.
 dd_seasonality = 20         # Order of approximation for daily STL component.
 yy_seasonality = 20         # Order of approximation for yearly STL component.
 granularity = 'H'
