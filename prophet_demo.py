@@ -1,6 +1,5 @@
-from script import prepare_dataframe, suppress_stdout_stderr
+from script import prepare_dataframe, suppress_stdout_stderr, create_results_dir
 from fbprophet import Prophet
-import datetime
 import os
 
 
@@ -44,10 +43,7 @@ def main():
     components_fig.show()
 
     # Save the results into a csv contained in a dedicated folder
-    today = datetime.datetime.now()
-    results_dir = "results_" + str(today.year) + "_" + str(today.month) + "_" + str(today.day) + "__" \
-                  + str(today.hour) + "_" + str(today.minute) + "_" + str(today.second)
-    os.mkdir(results_dir)
+    results_dir = create_results_dir()
 
     data_fig.savefig(os.path.join(results_dir, "data_plot.pdf"))
     components_fig.savefig(os.path.join(results_dir, "STL_components_plot.pdf"))
