@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import pandas as pd
+import os
 
 """
     Use this script to visualize results from a previous execution of Prophet. 
@@ -15,7 +16,7 @@ import pandas as pd
           your plots on a document or print.
 """
 
-original_data = pd.read_csv("input/dataset.csv")
+original_data = pd.read_csv(os.path.join("input", "dataset.csv"))
 results_data = pd.read_csv("prediction.csv")
 
 plt.figure(figsize=(50, 10))  # Size is in... inches. ¯\_(ツ)_/¯

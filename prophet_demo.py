@@ -9,7 +9,7 @@ import os
 def main():
 
     # Prophet requires a Pandas' dataframe with 'y' and 'ds' columns. We need to transform the csv a little.
-    dataframe = prepare_dataframe('input/dataset.csv')
+    dataframe = prepare_dataframe(os.path.join('input', 'dataset.csv'))
     print("First 5 rows of input file:")
     dataframe.head()
 

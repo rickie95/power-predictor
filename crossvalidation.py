@@ -18,11 +18,11 @@ import glob
 # GLOBAL PARAMETERS
 
 threads = 4                 # Specifies the number of jobs to run in parallel.
-input_dir = "csv/LHO/"      # Path to input files. Can be absolute.
+input_dir = "input_folder"  # Path to input files. Can be absolute.
 week_split = [16, 4, 2, 1]  # Sizes of splits, specified in weeks.
 dd_seasonality = 20         # Order of approximation for daily STL component.
 yy_seasonality = 20         # Order of approximation for yearly STL component.
-granularity = 'H'
+granularity = 'H'           # Granularity of data. Hourly, Daily, Monthly, ecc..
 
 
 def worker(passthrough):
